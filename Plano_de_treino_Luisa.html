@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Luísa GO Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; }
+        
+        /* Cores e Estilos */
+        .tab-active { border-bottom: 3px solid #FFCC00; background: white; color: black; font-weight: 700; }
+        .tab-inactive { color: #6B7280; border-bottom: 3px solid transparent; }
+        
+        /* Inputs de Carga */
+        .weight-input {
+            width: 50px;
+            text-align: center;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            background: #f9fafb;
+        }
+        .weight-input:focus { outline: 2px solid #FFCC00; border-color: transparent; background: white; }
+
+        /* Checkbox Customizada */
+        .check-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid #e5e7eb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .check-btn.checked { background-color: #10B981; border-color: #10B981; color: white; }
+        .check-btn i { opacity: 0; transform: scale(0.5); transition: all 0.2s; }
+        .check-btn.checked i { opacity: 1; transform: scale(1); }
+
+        /* Timer Modal */
+        #restTimerModal { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .timer-hidden { transform: translateY(100%); }
+        .timer-visible { transform: translateY(0); }
+
+        /* Alternativas */
+        .alt-box { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        .alt-box.open { max-height: 200px; }
+
+        .safe-pb { padding-bottom: calc(env(safe-area-inset-bottom) + 80px); }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-black text-white p-4 sticky top-0 z-50 shadow-md flex justify-between items-center">
+        <div>
+            <h1 class="text-xl font-black italic tracking-tighter">Luísa <span class="text-yellow-500">GO</span></h1>
+            <p class="text-[10px] text-gray-400 uppercase tracking-widest">Tracker Inteligente v2.0</p>
+        </div>
+        <button onclick="resetData()" class="text-gray-500 text-[10px] underline">Reset Cargas</button>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm sticky top-[60px] z-40 border-b">
+        <div class="flex justify-around text-sm">
+            <button onclick="renderPlan('planoA')" id="nav-planoA" class="tab-active w-full py-3 flex flex-col items-center transition-colors">
+                <span class="font-bold">Plano A</span>
+                <span class="text-[9px] opacity-75">Pernas (Máq)</span>
+            </button>
+            <button onclick="renderPlan('planoC')" id="nav-planoC" class="tab-inactive w-full py-3 flex flex-col items-center transition-colors">
+                <span class="font-bold">Plano C</span>
+                <span class="text-[9px] opacity-75">Superior</span>
+            </button>
+            <button onclick="renderPlan('planoD')" id="nav-planoD" class="tab-inactive w-full py-3 flex flex-col items-center transition-colors">
+                <span class="font-bold">Plano D</span>
+                <span class="text-[9px] opacity-75">Pernas (Livre)</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Container Principal (Renderizado via JS) -->
+    <main id="app-container" class="max-w-md mx-auto p-4 safe-pb space-y-6">
+        <!-- O conteúdo será injetado aqui -->
+    </main>
+
+    <!-- TIMER MODAL (Fixo no fundo) -->
+    <div id="restTimerModal" class="fixed bottom-0 left-0 right-0 bg-black text-white p-4 rounded-t-2xl shadow-2xl z-[60] timer-hidden flex items-center justify-between border-t-4 border-yellow-500">
+        <div class="flex items-center gap-3">
+            <div class="relative">
+                <svg class="w-12 h-12 transform -rotate-90">
+                    <circle cx="24" cy="24" r="20" stroke="gray" stroke-width="4" fill="transparent"/>
+                    <circle id="timerCircle" cx="24" cy="24" r="20" stroke="#FFCC00" stroke-width="4" fill="transparent" stroke-dasharray="125" stroke-dashoffset="0" class="transition-all duration-1000 linear"/>
+                </svg>
+                <span id="timerText" class="absolute inset-0 flex items-center justify-center font-bold text-sm">60</span>
+            </div>
+            <div>
+                <p class="text-xs text-gray-400 uppercase font-bold tracking-wider">Descanso</p>
+                <p class="text-sm font-semibold">Recupera o fôlego...</p>
+            </div>
+        </div>
+        <button onclick="stopTimer()" class="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded-full text-xs font-bold">
+            Saltar
+        </button>
+    </div>
+
+    <!-- AI Button -->
+    <button onclick="toggleAI()" class="fixed bottom-24 right-4 bg-yellow-400 text-black w-12 h-12 rounded-full shadow-lg flex items-center justify-center z-40 border-2 border-white">
+        <i class="fas fa-robot text-xl"></i>
+    </button>
+
+    <!-- AI Modal -->
+    <div id="aiModal" class="fixed inset-0 z-[70] hidden flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div class="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl">
+            <div class="bg-black p-3 flex justify-between items-center">
+                <span class="text-white font-bold"><i class="fas fa-robot text-yellow-500 mr-2"></i>Coach</span>
+                <button onclick="toggleAI()" class="text-white"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="aiResponse" class="p-4 h-60 overflow-y-auto bg-gray-50 text-sm">
+                <p class="text-gray-500 text-center mt-10">Olá! Pergunta-me qualquer coisa sobre o treino.</p>
+            </div>
+            <div class="p-3 border-t flex gap-2">
+                <input id="aiInput" type="text" placeholder="Dúvida..." class="flex-1 bg-gray-100 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-yellow-500">
+                <button onclick="askGemini()" class="bg-black text-yellow-400 px-3 rounded-lg"><i class="fas fa-paper-plane"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- DATA & LOGIC -->
+    <script>
+        // --- DADOS DO PLANO ---
+        const exercisesDB = {
+            planoA: [
+                { id: 'a1', name: 'Leg Extension', sets: [12, 12, 10, 8], rest: 60, img: 'technogym leg extension', video: 'leg+extension+technogym+tutorial', alt: 'Agachamento com elástico ou cadeira', tips: 'Joelho alinhado com o eixo. Não tranquear.' },
+                { id: 'a2', name: 'Lunge Frente/Trás', sets: [10, 10], label: 'Cada Perna', rest: 60, img: 'forward to reverse lunge', video: 'forward+to+reverse+lunge', alt: 'Step ups (subir para caixa)', tips: 'Passo largo. Tronco direito.' },
+                { id: 'a3', name: 'Lunge Estático', sets: [12, 12, 12, 12], label: 'Cada Perna', rest: 60, img: 'static lunge', video: 'static+lunge+form', alt: 'Split Squat sem peso', tips: 'Sobe e desce na vertical.' },
+                { id: 'a4', name: 'Leg Press', sets: [12, 12, 10, 8], rest: 90, img: 'technogym leg press horizontal', video: 'technogym+leg+press+horizontal', alt: 'Goblet Squat pesado', tips: 'Não esticar joelhos totalmente!' },
+                { id: 'a5', name: 'Agachamento', sets: [12, 12, 12], rest: 90, img: 'goblet squat', video: 'goblet+squat+form', alt: 'Agachamento na Smith Machine', tips: 'Calcanhares no chão. Peito aberto.' }
+            ],
+            planoC: [
+                { id: 'c0', isCircuit: true, name: 'Circuito Aquecimento', rounds: 2, exercises: ['Remo Máquina (4 min)', 'Flexões (10 reps)', 'Mountain Climbers (20 reps)'], rest: 60, video: 'mountain+climbers', alt: 'Jumping Jacks + Plank' },
+                { id: 'c1', name: 'Supino Reto', sets: [12, 12, 12], rest: 90, img: 'chest press machine', video: 'chest+press+machine', alt: 'Flexões de braços (joelhos no chão)', tips: 'Empurra em linha reta.' },
+                { id: 'c2', name: 'Remada Alta', sets: [12, 12, 12], rest: 60, img: 'upright row cable', video: 'cable+upright+row', alt: 'Remada Alta com Halteres', tips: 'Puxa pelos cotovelos.' },
+                { id: 'c3', name: 'Aberturas', sets: [12, 12, 12], rest: 60, img: 'pec deck', video: 'pec+deck+machine', alt: 'Aberturas com Halteres no banco', tips: 'Controla a volta.' },
+                { id: 'c4', name: 'Remada Baixa', sets: [12, 12, 12], rest: 60, img: 'seated cable row', video: 'seated+cable+row', alt: 'Remada com Halteres (Serrote)', tips: 'Costas direitas. Puxa ao umbigo.' },
+                { id: 'c5', name: 'Bicep Curl', sets: [12, 12, 12], rest: 60, img: 'dumbbell bicep curl', video: 'bicep+curl+dumbbell', alt: 'Bicep com elástico', tips: 'Sem balançar.' },
+                { id: 'c6', name: 'Tricep Kickback', sets: [12, 12, 12], rest: 60, img: 'tricep kickback', video: 'tricep+kickback+dumbbell', alt: 'Tricep na polia (corda)', tips: 'Cotovelo fixo e alto.' }
+            ],
+            planoD: [
+                { id: 'd1', name: 'Agachamento Sumo', sets: [12, 12, 10, 8], rest: 90, img: 'sumo squat dumbbell', video: 'sumo+squat+form', alt: 'Leg Press Pés abertos', tips: 'Pés abertos, pontas para fora.' },
+                { id: 'd2', name: 'Peso Morto', sets: [12, 12, 12], rest: 120, img: 'romanian deadlift', video: 'romanian+deadlift+form', alt: 'Back Extension (Banco lombar)', tips: 'Costas retas. Movimento de anca.' },
+                { id: 'd3', name: 'Bulgarian Split', sets: [10, 10, 10], label: 'Cada Perna', rest: 90, img: 'bulgarian split squat', video: 'bulgarian+split+squat', alt: 'Lunge Recuo', tips: 'Pé de trás no banco. Desce vertical.' },
+                { id: 'd4', name: 'Ponte Glúteos', sets: [12, 12, 10, 8], rest: 60, img: 'glute bridge dumbbell', video: 'glute+bridge+form', alt: 'Hip Thrust na máquina', tips: 'Aperta glúteo no topo.' }
+            ]
+        };
+
+        // --- ESTADO (CARGAS E CHECKS) ---
+        let userState = JSON.parse(localStorage.getItem('LuísaState')) || {};
+
+        // --- RENDERIZAÇÃO ---
+        function renderPlan(planId) {
+            // Update Tabs
+            document.querySelectorAll('nav button').forEach(b => {
+                b.classList.remove('tab-active');
+                b.classList.add('tab-inactive');
+            });
+            document.getElementById('nav-' + planId).classList.add('tab-active');
+            document.getElementById('nav-' + planId).classList.remove('tab-inactive');
+
+            const container = document.getElementById('app-container');
+            container.innerHTML = '';
+            
+            // Generate Exercises
+            exercisesDB[planId].forEach(ex => {
+                if (ex.isCircuit) {
+                    renderCircuit(ex, container);
+                } else {
+                    renderExerciseCard(ex, container);
+                }
+            });
+
+            // Scroll to top
+            window.scrollTo(0,0);
+        }
+
+        function renderExerciseCard(ex, container) {
+            const card = document.createElement('div');
+            card.className = 'bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden exercise-card';
+            
+            // Header Image
+            let html = `
+                <div class="relative h-32 bg-gray-100 group">
+                    <img src="https://placehold.co/600x300/111827/FFCC00?text=${encodeURIComponent(ex.name)}&font=montserrat" class="w-full h-full object-cover">
+                    <div class="absolute bottom-2 right-2 flex gap-2">
+                        <button onclick="window.open('https://www.google.com/search?tbm=isch&q=${ex.img}', '_blank')" class="bg-white/90 text-black text-[10px] font-bold px-2 py-1 rounded shadow"><i class="fas fa-camera"></i></button>
+                        <button onclick="window.open('https://www.youtube.com/results?search_query=${ex.video}', '_blank')" class="bg-red-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow"><i class="fab fa-youtube"></i></button>
+                    </div>
+                </div>
+                <div class="p-4">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h3 class="font-bold text-lg">${ex.name}</h3>
+                            <p class="text-xs text-gray-500">${ex.tips}</p>
+                        </div>
+                        <button onclick="toggleAlt('${ex.id}')" class="text-xs text-yellow-600 font-bold bg-yellow-50 px-2 py-1 rounded border border-yellow-200">
+                            <i class="fas fa-exchange-alt mr-1"></i>Ocupada?
+                        </button>
+                    </div>
+
+                    <!-- Alternative Hidden Box -->
+                    <div id="alt-${ex.id}" class="alt-box bg-gray-50 rounded-lg text-xs text-gray-600 mb-3 px-3">
+                        <div class="py-2"><strong>Alternativa:</strong> ${ex.alt}</div>
+                    </div>
+
+                    <!-- Sets & Tracking -->
+                    <div class="space-y-2 mt-4">
+            `;
+
+            // Render Rows per Set
+            ex.sets.forEach((reps, index) => {
+                const setKey = `${ex.id}_s${index}`;
+                const savedWeight = userState[setKey]?.weight || '';
+                const isChecked = userState[setKey]?.done ? 'checked' : '';
+
+                html += `
+                    <div class="flex items-center justify-between bg-gray-50 p-2 rounded-lg">
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-bold text-gray-400 w-4">#${index + 1}</span>
+                            <span class="text-sm font-bold w-12">${reps} <span class="text-[9px] font-normal text-gray-500">reps</span></span>
+                        </div>
+                        
+                        <div class="flex items-center gap-3">
+                            <div class="relative">
+                                <input type="number" 
+                                    placeholder="kg" 
+                                    value="${savedWeight}" 
+                                    onchange="saveState('${setKey}', 'weight', this.value)"
+                                    class="weight-input text-gray-900" 
+                                >
+                                <span class="text-[9px] text-gray-400 absolute right-1 top-1.5 hidden">kg</span>
+                            </div>
+                            
+                            <div class="check-btn ${isChecked}" onclick="toggleCheck('${setKey}', ${ex.rest}, ${index === ex.sets.length - 1})">
+                                <i class="fas fa-check text-sm"></i>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `</div></div>`;
+            card.innerHTML = html;
+            container.appendChild(card);
+        }
+
+        function renderCircuit(ex, container) {
+            const card = document.createElement('div');
+            card.className = 'bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-4 shadow-sm';
+            
+            let exercisesList = ex.exercises.map(e => `<li>• ${e}</li>`).join('');
+            
+            let roundsHtml = '';
+            for(let i=1; i<=ex.rounds; i++) {
+                const key = `${ex.id}_r${i}`;
+                const isChecked = userState[key]?.done ? 'checked' : '';
+                roundsHtml += `
+                    <div class="flex justify-between items-center bg-white p-3 rounded-lg border border-yellow-200 mt-2">
+                        <span class="font-bold text-sm">Ronda ${i}</span>
+                        <div class="check-btn ${isChecked}" onclick="toggleCheck('${key}', ${ex.rest}, false)">
+                             <i class="fas fa-check text-sm"></i>
+                        </div>
+                    </div>
+                `;
+            }
+
+            card.innerHTML = `
+                <div class="flex justify-between items-start">
+                    <h3 class="font-bold text-lg text-yellow-900"><i class="fas fa-running mr-2"></i>${ex.name}</h3>
+                </div>
+                <ul class="text-xs text-yellow-800 mt-2 mb-4 space-y-1 font-medium pl-2">
+                    ${exercisesList}
+                </ul>
+                <div class="space-y-2">
+                    ${roundsHtml}
+                </div>
+            `;
+            container.appendChild(card);
+        }
+
+        // --- LÓGICA DE INTERAÇÃO ---
+
+        function toggleAlt(id) {
+            const el = document.getElementById(`alt-${id}`);
+            el.classList.toggle('open');
+            if(el.classList.contains('open')) el.style.paddingBottom = "8px";
+            else el.style.paddingBottom = "0";
+        }
+
+        function saveState(key, field, value) {
+            if (!userState[key]) userState[key] = {};
+            userState[key][field] = value;
+            localStorage.setItem('LuísaState', JSON.stringify(userState));
+        }
+
+        function toggleCheck(key, restTime, isLastSet) {
+            // Toggle visual
+            const btn = event.currentTarget; // Safe because onclick passes context
+            const isChecked = btn.classList.toggle('checked');
+            
+            // Save state
+            saveState(key, 'done', isChecked);
+
+            // Trigger Timer only if checking (not unchecking) AND not the very last set of exercise
+            if (isChecked && !isLastSet) {
+                startTimer(restTime);
+            }
+        }
+
+        function resetData() {
+            if(confirm('Queres apagar todas as cargas e registos?')) {
+                localStorage.removeItem('LuísaState');
+                userState = {};
+                renderPlan('planoA'); // reload
+            }
+        }
+
+        // --- TIMER LOGIC ---
+        let timerInterval;
+        
+        function startTimer(seconds) {
+            const modal = document.getElementById('restTimerModal');
+            const text = document.getElementById('timerText');
+            const circle = document.getElementById('timerCircle');
+            
+            // Reset animation
+            modal.classList.remove('timer-hidden');
+            modal.classList.add('timer-visible');
+            
+            // Draw Circle Logic (125 is circumference approx for r=20)
+            const circumference = 125;
+            circle.style.strokeDashoffset = 0;
+            
+            let timeLeft = seconds;
+            text.innerText = timeLeft;
+
+            if (timerInterval) clearInterval(timerInterval);
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                text.innerText = timeLeft;
+                
+                // Update Circle
+                const offset = circumference - (timeLeft / seconds) * circumference;
+                circle.style.strokeDashoffset = offset;
+
+                if (timeLeft <= 0) {
+                    stopTimer();
+                    // Play simple beep (optional)
+                    // new Audio('beep.mp3').play().catch(e=>{}); 
+                    navigator.vibrate(200); // Vibrate phone
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+            const modal = document.getElementById('restTimerModal');
+            modal.classList.remove('timer-visible');
+            modal.classList.add('timer-hidden');
+        }
+
+        // --- AI LOGIC ---
+        function toggleAI() {
+            const modal = document.getElementById('aiModal');
+            modal.classList.toggle('hidden');
+        }
+
+        async function askGemini() {
+            const input = document.getElementById('aiInput');
+            const responseDiv = document.getElementById('aiResponse');
+            const text = input.value;
+            if (!text) return;
+
+            responseDiv.innerHTML += `<div class="text-right mb-2"><span class="bg-gray-200 p-2 rounded-lg inline-block">${text}</span></div>`;
+            input.value = '';
+            responseDiv.innerHTML += `<div class="text-left mb-2 text-gray-400 text-xs">A escrever...</div>`;
+            responseDiv.scrollTop = responseDiv.scrollHeight;
+
+            try {
+                const apiKey = ""; // API Key
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                
+                const payload = {
+                    contents: [{ parts: [{ text: text }] }],
+                    systemInstruction: { parts: [{ text: "És um PT do Luísa. Responde curto (max 2 frases). PT-PT." }] }
+                };
+
+                const res = await fetch(url, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+                const data = await res.json();
+                const aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Erro. Tenta de novo.";
+
+                // Remove loading and add response
+                responseDiv.lastElementChild.remove();
+                responseDiv.innerHTML += `<div class="text-left mb-4"><span class="bg-yellow-100 p-2 rounded-lg inline-block border border-yellow-200 text-gray-800">${aiText}</span></div>`;
+                
+            } catch (e) {
+                responseDiv.lastElementChild.innerHTML = "Erro de conexão.";
+            }
+            responseDiv.scrollTop = responseDiv.scrollHeight;
+        }
+
+        // --- INIT ---
+        // Start on Plano A
+        renderPlan('planoA');
+
+    </script>
+</body>
+</html>
