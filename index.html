@@ -64,7 +64,7 @@
             <h1 class="text-xl font-black italic tracking-tighter">Luísa <span class="text-yellow-500">GO</span></h1>
             <p class="text-[10px] text-gray-400 uppercase tracking-widest">Plano de Treino</p>
         </div>
-        <button onclick="resetData()" class="text-gray-500 text-[10px] underline">Reset Cargas</button>
+        <button onclick="reiniciarPlano()" class="text-gray-500 text-[10px] underline hover:text-white transition">Reiniciar Treino</button>
     </header>
 
     <!-- Navigation -->
@@ -305,7 +305,7 @@ function toggleAlt(id) {
     function saveState(key, field, value) {
         if (!userState[key]) userState[key] = {};
         userState[key][field] = value;
-        localStorage.setItem('solincaState', JSON.stringify(userState));
+        localStorage.setItem('LuísaState', JSON.stringify(userState));
     }
 
     function toggleCheck(key, restTime, isLastSet) {
@@ -332,7 +332,7 @@ function toggleAlt(id) {
             }
             
             // Guardar o estado atualizado (apenas com as cargas) no localStorage
-            localStorage.setItem('solincaState', JSON.stringify(userState));
+            localStorage.setItem('LuísaState', JSON.stringify(userState));
             
             // Encontrar e desligar todas as bolas verdes na interface atual
             const checkedButtons = document.querySelectorAll('.check-btn.checked');
@@ -340,7 +340,10 @@ function toggleAlt(id) {
                 btn.classList.remove('checked');
             });
             
-            alert('Plano reiniciado! As tuas cargas foram guardadas.');
+            // Parar o timer se estiver a correr
+            stopTimer();
+            
+            alert('Treino reiniciado! As tuas cargas foram guardadas.');
         }
     }
 
@@ -437,8 +440,3 @@ function toggleAlt(id) {
 </body>
 
 </html>
-
-
-
-
-
