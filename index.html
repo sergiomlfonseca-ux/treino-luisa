@@ -295,7 +295,7 @@
 
         // --- LÓGICA DE INTERAÇÃO ---
 
-        function toggleAlt(id) {
+function toggleAlt(id) {
         const el = document.getElementById(`alt-${id}`);
         el.classList.toggle('open');
         if(el.classList.contains('open')) el.style.paddingBottom = "8px";
@@ -322,11 +322,25 @@
         }
     }
 
-    function resetData() {
-        if(confirm('⚠️ ATENÇÃO: Queres mesmo apagar todo o teu progresso? Isto vai remover todas as cargas registadas e as séries concluídas, reiniciando o teu plano do zero.')) {
-            localStorage.removeItem('solincaState');
-            userState = {};
-            location.reload(); // Recarrega a página para limpar visualmente
+    function reiniciarPlano() {
+        if(confirm('ATENÇÃO: Queres limpar todas as séries concluídas (bolas verdes) e recomeçar o treino? O registo das tuas cargas será mantido.')) {
+            // Iterar sobre todo o userState e remover apenas as marcações 'done'
+            for (const key in userState) {
+                if (userState.hasOwnProperty(key)) {
+                    delete userState[key].done;
+                }
+            }
+            
+            // Guardar o estado atualizado (apenas com as cargas) no localStorage
+            localStorage.setItem('solincaState', JSON.stringify(userState));
+            
+            // Encontrar e desligar todas as bolas verdes na interface atual
+            const checkedButtons = document.querySelectorAll('.check-btn.checked');
+            checkedButtons.forEach(btn => {
+                btn.classList.remove('checked');
+            });
+            
+            alert('Plano reiniciado! As tuas cargas foram guardadas.');
         }
     }
 
@@ -423,6 +437,7 @@
 </body>
 
 </html>
+
 
 
 
