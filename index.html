@@ -296,39 +296,39 @@
         // --- LÓGICA DE INTERAÇÃO ---
 
         function toggleAlt(id) {
-            const el = document.getElementById(`alt-${id}`);
-            el.classList.toggle('open');
-            if(el.classList.contains('open')) el.style.paddingBottom = "8px";
-            else el.style.paddingBottom = "0";
-        }
+        const el = document.getElementById(`alt-${id}`);
+        el.classList.toggle('open');
+        if(el.classList.contains('open')) el.style.paddingBottom = "8px";
+        else el.style.paddingBottom = "0";
+    }
 
-        function saveState(key, field, value) {
-            if (!userState[key]) userState[key] = {};
-            userState[key][field] = value;
-            localStorage.setItem('LuísaState', JSON.stringify(userState));
-        }
+    function saveState(key, field, value) {
+        if (!userState[key]) userState[key] = {};
+        userState[key][field] = value;
+        localStorage.setItem('solincaState', JSON.stringify(userState));
+    }
 
-        function toggleCheck(key, restTime, isLastSet) {
-            // Toggle visual
-            const btn = event.currentTarget; // Safe because onclick passes context
-            const isChecked = btn.classList.toggle('checked');
-            
-            // Save state
-            saveState(key, 'done', isChecked);
+    function toggleCheck(key, restTime, isLastSet) {
+        // Toggle visual
+        const btn = event.currentTarget; // Safe because onclick passes context
+        const isChecked = btn.classList.toggle('checked');
+        
+        // Save state
+        saveState(key, 'done', isChecked);
 
-            // Trigger Timer only if checking (not unchecking) AND not the very last set of exercise
-            if (isChecked && !isLastSet) {
-                startTimer(restTime);
-            }
+        // Trigger Timer only if checking (not unchecking) AND not the very last set of exercise
+        if (isChecked && !isLastSet) {
+            startTimer(restTime);
         }
+    }
 
-        function resetData() {
-            if(confirm('Queres apagar todas as cargas e registos?')) {
-                localStorage.removeItem('LuísaState');
-                userState = {};
-                renderPlan('planoA'); // reload
-            }
+    function resetData() {
+        if(confirm('⚠️ ATENÇÃO: Queres mesmo apagar todo o teu progresso? Isto vai remover todas as cargas registadas e as séries concluídas, reiniciando o teu plano do zero.')) {
+            localStorage.removeItem('solincaState');
+            userState = {};
+            location.reload(); // Recarrega a página para limpar visualmente
         }
+    }
 
         // --- TIMER LOGIC ---
         let timerInterval;
@@ -423,6 +423,7 @@
 </body>
 
 </html>
+
 
 
 
